@@ -26,7 +26,7 @@ async function main() {
   //   )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
   // );
   const Voting = await ethers.getContractFactory("Voting");
-  const Voting_ = await Voting.deploy(["Marks", "Mike", "Henry", "Rock"], 90);
+  const Voting_ = await Voting.deploy(["Marks", "Mike", "Henry", "Rock"], 180);
   console.log("Contract Address: ", Voting_.address);
 }
 
