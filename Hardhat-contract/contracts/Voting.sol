@@ -3,62 +3,112 @@ pragma solidity ^0.8.0;
 
 contract Voting {
     struct Candidate {
+        uint256 id;
         string name;
-        uint256 voteCount;
+        uint256 numberOfVotes;
     }
 
     Candidate[] public candidates;
-    address owner;
+    address public owner;
     mapping(address => bool) public voters;
 
+    address[] public listOfVoters;
     uint256 public votingStart;
     uint256 public votingEnd;
 
-constructor(string[] memory _candidateNames, uint256 _durationInMinutes) {
-    for (uint256 i = 0; i < _candidateNames.length; i++) {
-        candidates.push(Candidate({
-            name: _candidateNames[i],
-            voteCount: 0
-        }));
-    }
-    owner = msg.sender;
-    votingStart = block.timestamp;
-    votingEnd = block.timestamp + (_durationInMinutes * 1 minutes);
-}
+    bool public electionStarted;
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
+    modifier onlyOwner() {
+        require(msg.sender == owner, "You are not authorized");
         _;
     }
 
-    function addCandidate(string memory _name) public onlyOwner {
-        candidates.push(Candidate({
-                name: _name,
-                voteCount: 0
-        }));
+    // check if election is on going
+    modifier electionOngoing(){
+        require(electionStarted, "No election started");
+        _;
     }
 
-    function vote(uint256 _candidateIndex) public {
-        require(!voters[msg.sender], "You have already voted.");
-        require(_candidateIndex < candidates.length, "Invalid candidate index.");
+    // create a constructor
+    constructor(){
+        owner = msg.sender;
+    }
 
-        candidates[_candidateIndex].voteCount++;
+    // to start an election
+    function startElection(string[] memory _candidates, uint256 _votingDuration) public onlyOwner{
+        require(electionStarted == false, "election is currently ongoing");
+        delete candidates;
+        resetAllVoterStatus();
+
+        for(uint256 i=0; i< _candidates.length; i++){
+            candidates.push(
+                Candidate({
+                    id: 1,
+                    name: _candidates[i],
+                    numberOfVotes: 0
+                })
+            );
+        }
+        electionStarted = true;
+        votingStart = block.timestamp;
+        votingEnd = block.timestamp + (_votingDuration * 1 minutes);
+    }
+
+    // to add a new candidate
+    function addCandidate(string memory _name) public onlyOwner electionOngoing{
+        candidates.push(
+            Candidate({id: candidates.length, name: _name, numberOfVotes: 0})
+        );
+    }
+
+    // check voters status
+    function voterStatus(address _voter) public view electionOngoing returns (bool) {
+        if(voters[_voter] == true){
+            return true;
+        }
+        return false;
+    }
+
+    // to vote function
+    function voteTo(uint256 _id) public electionOngoing{
+        require(checkElectionPeriod(), "Election period has ended");
+        require(
+            !voterStatus(msg.sender),
+            "You already voted. You can only vote once."
+        );
+        candidates[_id].numberOfVotes++;
         voters[msg.sender] = true;
+        listOfVoters.push(msg.sender);
     }
 
-    function getAllVotesOfCandiates() public view returns (Candidate[] memory){
+    // get the number of votes
+    function retrieveVotes() public view returns (Candidate[] memory){
         return candidates;
     }
 
-    function getVotingStatus() public view returns (bool) {
-        return (block.timestamp >= votingStart && block.timestamp < votingEnd);
+    // monitor the election time
+    function electionTimer() public view electionOngoing returns (uint256){
+        if(block.timestamp >= votingEnd){
+            return 0;
+        }
+        return (votingEnd - block.timestamp);
     }
 
-    function getRemainingTime() public view returns (uint256) {
-        require(block.timestamp >= votingStart, "Voting has not started yet.");
-        if (block.timestamp >= votingEnd) {
-            return 0;
+    // check is election period is still ongoing
+    function checkElectionPeriod() public returns (bool) {
+        if(electionTimer() > 0){
+            return true;
+        }
+        electionStarted = false;
+        return false;
     }
-        return votingEnd - block.timestamp;
+    
+
+    // function to reset all the voters status
+    function resetAllVoterStatus() public onlyOwner{
+        for(uint256 i=0; i<listOfVoters.length; i++){
+            voters[listOfVoters[i]] = false;
+        }
+        delete listOfVoters;
     }
 }

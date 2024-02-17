@@ -6,8 +6,8 @@
 // global scope, and execute the script.
 // const hre = require("hardhat");
 
-const { ethers } = require("hardhat");
-
+// const { ethers } = require("hardhat");
+const hre = require("hardhat");
 async function main() {
   // const currentTimestampInSeconds = Math.round(Date.now() / 1000);
   // const unlockTime = currentTimestampInSeconds + 60;
@@ -25,9 +25,11 @@ async function main() {
   //     lockedAmount
   //   )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
   // );
-  const Voting = await ethers.getContractFactory("Voting");
-  const Voting_ = await Voting.deploy(["Marks", "Mike", "Henry", "Rock"], 180);
-  console.log("Contract Address: ", Voting_.address);
+  const votingContract = await hre.ethers.getContractFactory("Voting");
+  const deployedVotingContract = await votingContract.deploy();
+  // console.log(votingContract)
+  // console.log(deployedVotingContract.target)
+  console.log(`The deployed address is ${deployedVotingContract.address}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -38,3 +40,6 @@ main()
   console.error(error);
   process.exitCode = 1;
 });
+
+
+// 0x6278384FEa723427C4DD869dDe920a6b5670A0C1

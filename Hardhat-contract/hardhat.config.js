@@ -3,20 +3,17 @@
 */
 
 require('dotenv').config();
-require("@nomiclabs/hardhat-ethers");
-
-const { API_URL, PRIVATE_KEY } = process.env;
+require("@nomicfoundation/hardhat-toolbox");
 
 module.exports = {
    solidity: "0.8.11",
-   defaultNetwork: "volta",
    networks: {
-      hardhat: {},
-      volta: {
-         url: API_URL,
-         accounts: [`0x${PRIVATE_KEY}`],
-         gas: 210000000,
-         gasPrice: 30000,
-      }
+      mumbai: {
+         url: process.env.RPC_URL,
+         accounts: [process.env.PRIVATE_KEY],
+      },
    },
+   etherscan: {
+      apiKey: process.env.API_KEY
+   }
 }
